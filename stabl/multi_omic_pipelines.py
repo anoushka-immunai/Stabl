@@ -136,6 +136,18 @@ def multi_omic_stabl_cv(
     predictions_dict: dict
         Dictionary containing the predictions of each model for each sample in Cross-Validation.
     """
+
+    def uniq(lst): ## Helper functions to remove duplicates when EF lasso runs multiple times #**# Noush
+        last = object()
+        for item in lst:
+            if item == last:
+                continue
+            yield item
+            last = item
+
+    def sort_and_deduplicate(l):
+        return list(uniq(sorted(l, reverse=True)))
+    
     if early_fusion:
         models += ["EF " + model for model in models if "STABL" not in model]
 
@@ -156,10 +168,12 @@ def multi_omic_stabl_cv(
     predictions_dict = dict()
     selected_features_dict = dict()
     stabl_features_dict = dict()
+    foldIx = dict()
 
     for model in models:
         predictions_dict[model] = pd.DataFrame(data=None, index=y.index)
         selected_features_dict[model] = []
+        foldIx[model] = []
         stabl_features_dict[model] = dict()
         for omic_name in data_dict.keys():
             if "STABL" in model:
@@ -441,10 +455,14 @@ def multi_omic_stabl_cv(
 
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         for model in models:
-            print(f"This fold: {len(fold_selected_features[model])} features selected for {model}")
-            selected_features_dict[model].append(fold_selected_features[model])
+            print(f"This fold ({k}): {len(fold_selected_features[model])} features selected for {model}")
+            if len(fold_selected_features[model]) != 0:
+                if k not in foldIx[model]:
+                    foldIx[model].append(k)
+                    # print(model)
+                    # print(foldIx[model])
+                selected_features_dict[model].append(fold_selected_features[model])
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
-
         k += 1
 
     # __SAVING_RESULTS__
@@ -459,15 +477,19 @@ def multi_omic_stabl_cv(
     formatted_features_dict = dict()
 
     for model in models:
+        print("Starting to save output for", model)
+        jaccard_matrix_dict[model] = jaccard_matrix(selected_features_dict[model]) ## not being saved anywhere #**# Noush
 
-        jaccard_matrix_dict[model] = jaccard_matrix(selected_features_dict[model])
+        sorted_deduped_list = sort_and_deduplicate(selected_features_dict[model])
+        selected_features_dict[model] = sorted_deduped_list
 
         formatted_features_dict[model] = pd.DataFrame(
             data={
                 "Fold selected features": selected_features_dict[model],
                 "Fold nb of features": [len(el) for el in selected_features_dict[model]]
             },
-            index=[f"Fold {i}" for i in range(outer_splitter.get_n_splits(X=X_tot))]
+            #index=[f"Fold {i}" for i in range(outer_splitter.get_n_splits(X=X_tot))]
+            index=[f"Fold {i}" for i in foldIx[model]]
         )
         formatted_features_dict[model].to_csv(Path(cv_res_path, f"Selected Features {model}.csv"))
         if "STABL" in model:
@@ -475,38 +497,49 @@ def multi_omic_stabl_cv(
                 os.makedirs(Path(cv_res_path, f"Stabl features {model}"), exist_ok=True)
                 val.to_csv(Path(cv_res_path, f"Stabl features {model}", f"Stabl features {model} {omic_name}.csv"))
 
+    before_averaging_dict = predictions_dict.copy() #**# Noush
     predictions_dict = {model: predictions_dict[model].median(axis=1) for model in predictions_dict.keys()}
 
-    table_of_scores = compute_scores_table(
-        predictions_dict=predictions_dict,
-        y=y,
-        task_type=task_type,
-        selected_features_dict=formatted_features_dict
-    )
+    for model, preds in predictions_dict.items():
+        try:
+            if pd.isna(y).any() or pd.isna(preds).any():
+                raise ValueError("Found NaNs in y or predictions")
 
-    p_values = compute_pvalues_table(
-        predictions_dict=predictions_dict,
-        y=y,
-        task_type=task_type,
-        selected_features_dict=formatted_features_dict
-    )
+            table_of_scores = compute_scores_table(
+                predictions_dict=predictions_dict,
+                y=y,
+                task_type=task_type,
+                selected_features_dict=formatted_features_dict
+            )
 
-    table_of_scores.to_csv(Path(summary_res_path, "Scores training CV.csv"))
-    table_of_scores.to_csv(Path(cv_res_path, "Scores training CV.csv"))
+            p_values = compute_pvalues_table(
+                predictions_dict=predictions_dict,
+                y=y,
+                task_type=task_type,
+                selected_features_dict=formatted_features_dict
+            )
 
-    p_values_path = Path(cv_res_path, "p-values")
-    os.makedirs(p_values_path, exist_ok=True)
-    for m, p in p_values.items():
-        p.to_csv(Path(p_values_path, f"{m}.csv"))
+            table_of_scores.to_csv(Path(summary_res_path, "Scores training CV.csv"))
+            table_of_scores.to_csv(Path(cv_res_path, "Scores training CV.csv"))
 
-    save_plots(
-        predictions_dict=predictions_dict,
-        y=y,
-        task_type=task_type,
-        save_path=cv_res_path
-    )
+            p_values_path = Path(cv_res_path, "p-values")
+            os.makedirs(p_values_path, exist_ok=True)
+            for m, p in p_values.items():
+                p.to_csv(Path(p_values_path, f"{m}.csv"))
 
-    return predictions_dict
+            save_plots(
+                predictions_dict=predictions_dict,
+                y=y,
+                task_type=task_type,
+                save_path=cv_res_path
+            )
+            
+        except ValueError as e:
+            print(f"Error in model {model}: {e}")
+
+    print("Results saved!")
+
+    return before_averaging_dict #**# Noush
 
 
 def multi_omic_stabl(
