@@ -459,8 +459,7 @@ def multi_omic_stabl_cv(
             if len(fold_selected_features[model]) != 0:
                 if k not in foldIx[model]:
                     foldIx[model].append(k)
-                    # print(model)
-                    # print(foldIx[model])
+                    print("Model:",model,"Index:",foldIx[model])
                 selected_features_dict[model].append(fold_selected_features[model])
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
         k += 1
@@ -479,16 +478,18 @@ def multi_omic_stabl_cv(
     for model in models:
         print("Starting to save output for", model)
         jaccard_matrix_dict[model] = jaccard_matrix(selected_features_dict[model]) ## not being saved anywhere #**# Noush
-
-        sorted_deduped_list = sort_and_deduplicate(selected_features_dict[model])
-        selected_features_dict[model] = sorted_deduped_list
+        
+        if len(selected_features_dict[model]) > len(foldIx[model]): ## Edge-case of stabl lasso having exact same features across 2 folds
+            print(len(selected_features_dict[model]), "features selected for", model)
+            sorted_deduped_list = sort_and_deduplicate(selected_features_dict[model])
+            selected_features_dict[model] = sorted_deduped_list
+            print(len(selected_features_dict[model]), "features selected for", model,"after deduplication")
 
         formatted_features_dict[model] = pd.DataFrame(
             data={
                 "Fold selected features": selected_features_dict[model],
                 "Fold nb of features": [len(el) for el in selected_features_dict[model]]
             },
-            #index=[f"Fold {i}" for i in range(outer_splitter.get_n_splits(X=X_tot))]
             index=[f"Fold {i}" for i in foldIx[model]]
         )
         formatted_features_dict[model].to_csv(Path(cv_res_path, f"Selected Features {model}.csv"))
