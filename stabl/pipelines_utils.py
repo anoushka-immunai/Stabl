@@ -154,8 +154,11 @@ def compute_scores_table(
             elif metric == "CVS":
                 jaccard_mat = jaccard_matrix(
                     selected_features_dict[model]["Fold selected features"], remove_diag=False)
-                jaccard_val = jaccard_mat[np.triu_indices_from(
-                    jaccard_mat, k=1)]
+                if jaccard_mat is not None: # If there is only one feature, the jaccard matrix is None #**# Noush
+                    jaccard_val = jaccard_mat[np.triu_indices_from(
+                        jaccard_mat, k=1)]
+                else:
+                    jaccard_val = np.array([0])
                 jaccard_median = np.median(jaccard_val)
                 jaccard_iqr = np.quantile(jaccard_val, [.25, .75])
                 cell_value = f"{jaccard_median:.3f} [{jaccard_iqr[0]:.3f}, {jaccard_iqr[1]:.3f}]"
@@ -256,13 +259,19 @@ def compute_pvalues_table(
                 elif metric == "CVS":
                     jaccard_mat = jaccard_matrix(
                         selected_features_dict[model]["Fold selected features"], remove_diag=False)
-                    jaccard_val = jaccard_mat[np.triu_indices_from(
-                        jaccard_mat, k=1)]
+                    if jaccard_mat is not None: # If there is only one feature, the jaccard matrix is None #**# Noush
+                        jaccard_val = jaccard_mat[np.triu_indices_from(
+                            jaccard_mat, k=1)]
+                    else:
+                        jaccard_val = np.array([0])
 
                     jaccard_mat2 = jaccard_matrix(
                         selected_features_dict[model2]["Fold selected features"], remove_diag=False)
-                    jaccard_val2 = jaccard_mat2[np.triu_indices_from(
-                        jaccard_mat2, k=1)]
+                    if jaccard_mat2 is not None:
+                        jaccard_val2 = jaccard_mat2[np.triu_indices_from(
+                            jaccard_mat2, k=1)]
+                    else:
+                        jaccard_val2 = np.array([0])
 
                     p_value = mannwhitneyu(
                         x=jaccard_val, y=jaccard_val2).pvalue
