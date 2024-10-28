@@ -52,11 +52,13 @@ def jaccard_matrix(list_of_lists, remove_diag=True):
         for j in range(N):
             jaccard_mat[i, j] = jaccard_similarity(list_of_lists[i], list_of_lists[j])
 
-    if remove_diag:
+    if remove_diag and jaccard_mat.shape[0] > 1:
         jaccard_mat = jaccard_mat[~np.eye(jaccard_mat.shape[0], dtype=bool)].reshape(
             jaccard_mat.shape[0], -1)
-
-    return jaccard_mat
+        return jaccard_mat
+    
+    else:
+        return None
 
 
 def adjusted_similarity(list1, list2, nb_total_elements):
