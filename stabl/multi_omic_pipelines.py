@@ -112,11 +112,11 @@ def multi_omic_stabl_cv(
     models: list of str
         List of models to use. Can contain :
         - "Lasso" : Lasso
-        - "STABL Lasso" : Stabl with Lasso as base estimator
+        - "STABL-Lasso" : Stabl with Lasso as base estimator
         - "ALasso" : ALasso
-        - "STABL ALasso" : Stabl with ALasso as base estimator
+        - "STABL-ALasso" : Stabl with ALasso as base estimator
         - "ElasticNet" : ElasticNet
-        - "STABL ElasticNet" : Stabl with ElasticNet as base estimator
+        - "STABL-ElasticNet" : Stabl with ElasticNet as base estimator
 
     outer_groups: pd.Series, default=None
         If used, should be the same size as y and should indicate the groups of the samples.
@@ -159,7 +159,7 @@ def multi_omic_stabl_cv(
     stabl_alasso = estimators["stabl_alasso"]
     stabl_en = estimators["stabl_en"]
 
-    os.makedirs(Path(save_path, "Training CV"), exist_ok=True)
+    os.makedirs(Path(save_path, "TrainingCV"), exist_ok=True)
     os.makedirs(Path(save_path, "Summary"), exist_ok=True)
 
     # Initializing the df containing the data of all omics
@@ -221,64 +221,65 @@ def multi_omic_stabl_cv(
             )
 
             # __STABL__
-            if "STABL Lasso" in models:
+            if "STABL-Lasso" in models:
                 # fit STABL Lasso
                 print("Fitting of STABL Lasso")
                 stabl.fit(X_tmp_std, y_tmp, groups=groups)
                 tmp_sel_features = list(stabl.get_feature_names_out())
-                fold_selected_features["STABL Lasso"].extend(tmp_sel_features)
+                fold_selected_features["STABL-Lasso"].extend(tmp_sel_features)
                 print(
                     f"STABL Lasso finished on {omic_name} ({X_tmp.shape[0]} samples);"
                     f" {len(tmp_sel_features)} features selected"
                 )
-                stabl_features_dict["STABL Lasso"][omic_name].loc[f'Fold n°{k}', "min FDP+"] = stabl.min_fdr_
-                stabl_features_dict["STABL Lasso"][omic_name].loc[f'Fold n°{k}', "Threshold"] = stabl.fdr_min_threshold_
-                if k == 1:
+                stabl_features_dict["STABL-Lasso"][omic_name].loc[f'Fold n°{k}', "min FDP+"] = stabl.min_fdr_
+                stabl_features_dict["STABL-Lasso"][omic_name].loc[f'Fold n°{k}', "Threshold"] = stabl.fdr_min_threshold_
+                stabl_save_path = Path(save_path, "TrainingCV", f"STABL-Lasso_results_on_{omic_name}")
+                if len(tmp_sel_features) > 0 and not stabl_save_path.exists():
                     save_stabl_results(
                         stabl=stabl,
-                        path=Path(save_path, "Training CV", f"STABL Lasso results on {omic_name}"),
+                        path=stabl_save_path,
                         df_X=X_tmp_std,
                         y=y_tmp,
                         task_type=task_type
                     )
 
-            if "STABL ALasso" in models:
+            if "STABL-ALasso" in models:
                 # fit STABL ALasso
                 print("Fitting of STABL ALasso")
                 stabl_alasso.fit(X_tmp_std, y_tmp, groups=groups)
                 tmp_sel_features = list(stabl_alasso.get_feature_names_out())
-                fold_selected_features["STABL ALasso"].extend(tmp_sel_features)
+                fold_selected_features["STABL-ALasso"].extend(tmp_sel_features)
                 print(
                     f"STABL ALasso finished on {omic_name} ({X_tmp.shape[0]} samples);"
                     f" {len(tmp_sel_features)} features selected"
                 )
-                stabl_features_dict["STABL ALasso"][omic_name].loc[f'Fold n°{k}', "min FDP+"] = stabl_alasso.min_fdr_
-                stabl_features_dict["STABL ALasso"][omic_name].loc[f'Fold n°{k}', "Threshold"] = stabl_alasso.fdr_min_threshold_
+                stabl_features_dict["STABL-ALasso"][omic_name].loc[f'Fold n°{k}', "min FDP+"] = stabl_alasso.min_fdr_
+                stabl_features_dict["STABL-ALasso"][omic_name].loc[f'Fold n°{k}', "Threshold"] = stabl_alasso.fdr_min_threshold_
                 if k == 1:
                     save_stabl_results(
                         stabl=stabl_alasso,
-                        path=Path(save_path, "Training CV", f"STABL ALasso results on {omic_name}"),
+                        path=Path(save_path, "TrainingCV", f"STABL-ALasso_results_on_{omic_name}"),
                         df_X=X_tmp_std,
                         y=y_tmp,
                         task_type=task_type
                     )
 
-            if "STABL ElasticNet" in models:
+            if "STABL-ElasticNet" in models:
                 # fit STABL ElasticNet
                 print("Fitting of STABL ElasticNet")
                 stabl_en.fit(X_tmp_std, y_tmp, groups=groups)
                 tmp_sel_features = list(stabl_en.get_feature_names_out())
-                fold_selected_features["STABL ElasticNet"].extend(tmp_sel_features)
+                fold_selected_features["STABL-ElasticNet"].extend(tmp_sel_features)
                 print(
                     f"STABL ElasticNet finished on {omic_name} ({X_tmp.shape[0]} samples);"
                     f" {len(tmp_sel_features)} features selected"
                 )
-                stabl_features_dict["STABL ElasticNet"][omic_name].loc[f'Fold n°{k}', "min FDP+"] = stabl_en.min_fdr_
-                stabl_features_dict["STABL ElasticNet"][omic_name].loc[f'Fold n°{k}', "Threshold"] = stabl_en.fdr_min_threshold_
+                stabl_features_dict["STABL-ElasticNet"][omic_name].loc[f'Fold n°{k}', "min FDP+"] = stabl_en.min_fdr_
+                stabl_features_dict["STABL-ElasticNet"][omic_name].loc[f'Fold n°{k}', "Threshold"] = stabl_en.fdr_min_threshold_
                 if k == 1:
                     save_stabl_results(
                         stabl=stabl_en,
-                        path=Path(save_path, "Training CV", f"STABL ElasticNet results on {omic_name}"),
+                        path=Path(save_path, "TrainingCV", f"STABL-ElasticNet_results_on_{omic_name}"),
                         df_X=X_tmp_std,
                         y=y_tmp,
                         task_type=task_type
@@ -382,7 +383,7 @@ def multi_omic_stabl_cv(
         if late_fusion:
             preds_lf = late_fusion_cv(
                 predictions_dict_late_fusion, y[test_idx], task_type,
-                Path(save_path, "Training CV"), n_iter=n_iter_lf
+                Path(save_path, "TrainingCV"), n_iter=n_iter_lf
             )
             for model in preds_lf:
                 predictions_dict[model].loc[test_idx, f'Fold n°{k}'] = preds_lf[model]
@@ -405,7 +406,7 @@ def multi_omic_stabl_cv(
             )
             groups = outer_groups[train_idx] if outer_groups is not None else None
 
-            if "EF Lasso" in models:
+            if "EF-Lasso" in models:
                 # __Lasso__
                 print("Fitting of EF Lasso")
                 model = clone(lasso)
@@ -414,14 +415,14 @@ def multi_omic_stabl_cv(
                 else:
                     predictions = model.fit(X_train_std, y_train, groups=groups).predict(X_test_std)
                 tmp_sel_features = list(X_train_std.columns[np.where(model.best_estimator_.coef_.flatten())])
-                fold_selected_features["EF Lasso"] = tmp_sel_features
+                fold_selected_features["EF-Lasso"] = tmp_sel_features
                 print(
                     f"EF Lasso finished on {omic_name} ({X_train_std.shape[0]} samples);"
                     f" {len(tmp_sel_features)} features selected"
                 )
-                predictions_dict["EF Lasso"].loc[test_idx, f"Fold n°{k}"] = predictions
+                predictions_dict["EF-Lasso"].loc[test_idx, f"Fold n°{k}"] = predictions
 
-            if "EF ALasso" in models:
+            if "EF-ALasso" in models:
                 # __ALasso__
                 print("Fitting of EF ALasso")
                 model = clone(alasso)
@@ -430,14 +431,14 @@ def multi_omic_stabl_cv(
                 else:
                     predictions = model.fit(X_train_std, y_train, groups=groups).predict(X_test_std)
                 tmp_sel_features = list(X_train_std.columns[np.where(model.best_estimator_.coef_.flatten())])
-                fold_selected_features["EF ALasso"] = tmp_sel_features
+                fold_selected_features["EF-ALasso"] = tmp_sel_features
                 print(
                     f"EF ALasso finished on {omic_name} ({X_train_std.shape[0]} samples);"
                     f" {len(tmp_sel_features)} features selected"
                 )
-                predictions_dict["EF ALasso"].loc[test_idx, f"Fold n°{k}"] = predictions
+                predictions_dict["EF-ALasso"].loc[test_idx, f"Fold n°{k}"] = predictions
 
-            if "EF ElasticNet" in models:
+            if "EF-ElasticNet" in models:
                 # __EN__
                 print("Fitting of EF ElasticNet")
                 model = clone(en)
@@ -446,12 +447,12 @@ def multi_omic_stabl_cv(
                 else:
                     predictions = model.fit(X_train_std, y_train, groups=groups).predict(X_test_std)
                 tmp_sel_features = list(X_train_std.columns[np.where(model.best_estimator_.coef_.flatten())])
-                fold_selected_features["EF ElasticNet"] = tmp_sel_features
+                fold_selected_features["EF-ElasticNet"] = tmp_sel_features
                 print(
                     f"EF ElasticNet finished on {omic_name} ({X_train_std.shape[0]} samples);"
                     f" {len(tmp_sel_features)} features selected"
                 )
-                predictions_dict["EF ElasticNet"].loc[test_idx, f"Fold n°{k}"] = predictions
+                predictions_dict["EF-ElasticNet"].loc[test_idx, f"Fold n°{k}"] = predictions
 
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         for model in models:
@@ -470,7 +471,7 @@ def multi_omic_stabl_cv(
         y.name = "outcome"
 
     summary_res_path = Path(save_path, "Summary")
-    cv_res_path = Path(save_path, "Training CV")
+    cv_res_path = Path(save_path, "TrainingCV")
 
     jaccard_matrix_dict = dict()
     formatted_features_dict = dict()
@@ -492,11 +493,11 @@ def multi_omic_stabl_cv(
             },
             index=[f"Fold {i}" for i in foldIx[model]]
         )
-        formatted_features_dict[model].to_csv(Path(cv_res_path, f"Selected Features {model}.csv"))
+        formatted_features_dict[model].to_csv(Path(cv_res_path, f"SelectedFeatures_{model}.csv"))
         if "STABL" in model:
             for omic_name, val in stabl_features_dict[model].items():
-                os.makedirs(Path(cv_res_path, f"Stabl features {model}"), exist_ok=True)
-                val.to_csv(Path(cv_res_path, f"Stabl features {model}", f"Stabl features {model} {omic_name}.csv"))
+                os.makedirs(Path(cv_res_path, f"Stabl_features_{model}"), exist_ok=True)
+                val.to_csv(Path(cv_res_path, f"Stabl_features_{model}", f"Stabl_features_{model}_{omic_name}.csv"))
 
     before_averaging_dict = predictions_dict.copy() #**# Noush
     predictions_dict = {model: predictions_dict[model].median(axis=1) for model in predictions_dict.keys()}
@@ -520,8 +521,8 @@ def multi_omic_stabl_cv(
                 selected_features_dict=formatted_features_dict
             )
 
-            table_of_scores.to_csv(Path(summary_res_path, "Scores training CV.csv"))
-            table_of_scores.to_csv(Path(cv_res_path, "Scores training CV.csv"))
+            table_of_scores.to_csv(Path(summary_res_path, "Scores_trainingCV.csv"))
+            table_of_scores.to_csv(Path(cv_res_path, "Scores_trainingCV.csv"))
 
             p_values_path = Path(cv_res_path, "p-values")
             os.makedirs(p_values_path, exist_ok=True)
@@ -589,11 +590,11 @@ def multi_omic_stabl(
     models: list of str
         List of models to use. Can contain :
         - "Lasso" : Lasso
-        - "STABL Lasso" : Stabl with Lasso as base estimator
+        - "STABL-Lasso" : Stabl with Lasso as base estimator
         - "ALasso" : ALasso
-        - "STABL ALasso" : Stabl with ALasso as base estimator
+        - "STABL-ALasso" : Stabl with ALasso as base estimator
         - "ElasticNet" : ElasticNet
-        - "STABL ElasticNet" : Stabl with ElasticNet as base estimator
+        - "STABL-ElasticNet" : Stabl with ElasticNet as base estimator
         - "SGL-90" : SGL with 0.90 as correlation threshold
         - "STABL SGL-90" : Stabl with SGL with 0.90 as correlation threshold as base estimator
         - "SGL-95" : SGL with 0.95 as correlation threshold
@@ -690,7 +691,7 @@ def multi_omic_stabl(
             )
 
         # __STABL__
-        if "STABL Lasso" in models:
+        if "STABL-Lasso" in models:
             # fit STABL Lasso
             print(f"Fitting of STABL Lasso on {omic_name}")
             if "STABL Lasso" in stabl_params and omic_name in stabl_params["STABL Lasso"]:
@@ -710,7 +711,7 @@ def multi_omic_stabl(
                 task_type=task_type
             )
 
-        if "STABL ALasso" in models:
+        if "STABL-ALasso" in models:
             # fit STABL ALasso
             print(f"Fitting of STABL ALasso on {omic_name}")
             if "STABL ALasso" in stabl_params and omic_name in stabl_params["STABL ALasso"]:
@@ -730,7 +731,7 @@ def multi_omic_stabl(
                 task_type=task_type
             )
 
-        if "STABL ElasticNet" in models:
+        if "STABL-ElasticNet" in models:
             # fit STABL ElasticNet
             print(f"Fitting of STABL ElasticNet on {omic_name}")
             if "STABL ElasticNet" in stabl_params and omic_name in stabl_params["STABL ElasticNet"]:
@@ -946,7 +947,7 @@ def multi_omic_stabl(
                 columns=preprocessing.get_feature_names_out()
             )
 
-        if "EF Lasso" in models:
+        if "EF-Lasso" in models:
             # __Lasso__
             print("Fitting of EF Lasso")
             model = clone(lasso)
@@ -979,7 +980,7 @@ def multi_omic_stabl(
                     name=f"EF Lasso predictions"
                 )
 
-        if "EF ALasso" in models:
+        if "EF-ALasso" in models:
             # __ALasso__
             print("Fitting of EF ALasso")
             model = clone(alasso)
@@ -998,7 +999,7 @@ def multi_omic_stabl(
             model_coef.to_csv(Path(save_path, "Training-Validation", "EF ALasso coefficients.csv"))
 
             print(
-                f"EF ALasso finished on {omic_name} ({X_train_std.shape[0]} samples);"
+                f"EF-ALasso finished on {omic_name} ({X_train_std.shape[0]} samples);"
                 f" {len(tmp_sel_features)} features selected"
             )
             if X_test is not None:
@@ -1012,7 +1013,7 @@ def multi_omic_stabl(
                     name=f"EF ALasso predictions"
                 )
 
-        if "EF ElasticNet" in models:
+        if "EF-ElasticNet" in models:
             # __EN__
             print("Fitting of EF ElasticNet")
             model = clone(en)

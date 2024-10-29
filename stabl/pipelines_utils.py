@@ -55,7 +55,7 @@ def save_plots(predictions_dict, y, task_type, save_path):
                 show_CI=True,
                 export_file=True,
                 show_fig=False,
-                path=os.path.join(saving_path, f"{name} ROC.pdf")
+                path=os.path.join(saving_path, f"{name}_ROC.pdf")
             )
 
             plot_prc(
@@ -64,7 +64,7 @@ def save_plots(predictions_dict, y, task_type, save_path):
                 show_CI=True,
                 export_file=True,
                 show_fig=False,
-                path=os.path.join(saving_path, f"{name} PR Curve.pdf")
+                path=os.path.join(saving_path, f"{name}_PR_Curve.pdf")
             )
 
             boxplot_binary_predictions(
@@ -72,7 +72,7 @@ def save_plots(predictions_dict, y, task_type, save_path):
                 y_preds=predictions,
                 export_file=True,
                 show_fig=False,
-                path=os.path.join(saving_path, f"{name} Boxplot of median predictions.pdf")
+                path=os.path.join(saving_path, f"{name}_Boxplot_of_median_predictions.pdf")
             )
 
         elif task_type == "regression":
@@ -81,7 +81,7 @@ def save_plots(predictions_dict, y, task_type, save_path):
                 y_preds=predictions,
                 export_file=True,
                 show_fig=False,
-                paths=os.path.join(saving_path, f"{name} Scatter-plot of median predictions.pdf")
+                paths=os.path.join(saving_path, f"{name}_Scatter-plot_of_median_predictions.pdf")
             )
 
 
