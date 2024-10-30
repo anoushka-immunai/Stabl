@@ -149,7 +149,7 @@ def multi_omic_stabl_cv(
         return list(uniq(sorted(l, reverse=True)))
     
     if early_fusion:
-        models += ["EF " + model for model in models if "STABL" not in model]
+        models += ["EF-" + model for model in models if "STABL" not in model]
 
     lasso = estimators["lasso"]
     alasso = estimators["alasso"]
@@ -956,14 +956,14 @@ def multi_omic_stabl(
             except:
                 model.fit(X_train_std, y)
             tmp_sel_features = list(X_train_std.columns[np.where(model.best_estimator_.coef_.flatten())])
-            selected_features_dict["EF Lasso"] = tmp_sel_features
+            selected_features_dict["EF-Lasso"] = tmp_sel_features
 
             model_coef = pd.DataFrame(
-                {"Feature": selected_features_dict["EF Lasso"],
+                {"Feature": selected_features_dict["EF-Lasso"],
                  "Associated weight": model.best_estimator_.coef_.flatten()[np.where(model.best_estimator_.coef_.flatten())]
                  }
             ).set_index("Feature")
-            model_coef.to_csv(Path(save_path, "Training-Validation", "EF Lasso coefficients.csv"))
+            model_coef.to_csv(Path(save_path, "Training-Validation", "EF-Lasso_coefficients.csv"))
 
             print(
                 f"EF Lasso finished on {omic_name} ({X_train_std.shape[0]} samples);"
@@ -974,10 +974,10 @@ def multi_omic_stabl(
                     predictions = model.predict_proba(X_test_std)[:, 1]
                 else:
                     predictions = model.predict(X_test_std)
-                predictions_dict["EF Lasso"] = pd.Series(
+                predictions_dict["EF-Lasso"] = pd.Series(
                     predictions,
                     index=y_test.index,
-                    name=f"EF Lasso predictions"
+                    name=f"EF-Lasso predictions"
                 )
 
         if "EF-ALasso" in models:
@@ -989,10 +989,10 @@ def multi_omic_stabl(
             except:
                 model.fit(X_train_std, y)
             tmp_sel_features = list(X_train_std.columns[np.where(model.best_estimator_.coef_.flatten())])
-            selected_features_dict["EF ALasso"] = tmp_sel_features
+            selected_features_dict["EF-ALasso"] = tmp_sel_features
 
             model_coef = pd.DataFrame(
-                {"Feature": selected_features_dict["EF ALasso"],
+                {"Feature": selected_features_dict["EF-ALasso"],
                  "Associated weight": model.best_estimator_.coef_.flatten()[np.where(model.best_estimator_.coef_.flatten())]
                  }
             ).set_index("Feature")
@@ -1007,10 +1007,10 @@ def multi_omic_stabl(
                     predictions = model.predict_proba(X_test_std)[:, 1]
                 else:
                     predictions = model.predict(X_test_std)
-                predictions_dict["EF ALasso"] = pd.Series(
+                predictions_dict["EF-ALasso"] = pd.Series(
                     predictions,
                     index=y_test.index,
-                    name=f"EF ALasso predictions"
+                    name=f"EF-ALasso predictions"
                 )
 
         if "EF-ElasticNet" in models:
@@ -1022,14 +1022,14 @@ def multi_omic_stabl(
             except:
                 model.fit(X_train_std, y)
             tmp_sel_features = list(X_train_std.columns[np.where(model.best_estimator_.coef_.flatten())])
-            selected_features_dict["EF ElasticNet"] = tmp_sel_features
+            selected_features_dict["EF-ElasticNet"] = tmp_sel_features
 
             model_coef = pd.DataFrame(
-                {"Feature": selected_features_dict["EF ElasticNet"],
+                {"Feature": selected_features_dict["EF-ElasticNet"],
                  "Associated weight": model.best_estimator_.coef_.flatten()[np.where(model.best_estimator_.coef_.flatten())]
                  }
             ).set_index("Feature")
-            model_coef.to_csv(Path(save_path, "Training-Validation", "EF ElasticNet coefficients.csv"))
+            model_coef.to_csv(Path(save_path, "Training-Validation", "EF-ElasticNet_coefficients.csv"))
 
             print(
                 f"EF ElasticNet finished on {omic_name} ({X_train_std.shape[0]} samples);"
@@ -1040,10 +1040,10 @@ def multi_omic_stabl(
                     predictions = model.predict_proba(X_test_std)[:, 1]
                 else:
                     predictions = model.predict(X_test_std)
-                predictions_dict["EF ElasticNet"] = pd.Series(
+                predictions_dict["EF-ElasticNet"] = pd.Series(
                     predictions,
                     index=y_test.index,
-                    name=f"EF ElasticNet predictions"
+                    name=f"EF-ElasticNet predictions"
                 )
 
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
