@@ -149,7 +149,7 @@ def multi_omic_stabl_cv(
         return list(uniq(sorted(l, reverse=True)))
     
     if early_fusion:
-        models += ["EF-" + model for model in models if "STABL" not in model]
+        models += ["EF-" + model for model in models if "STABL" not in model and "EF-" not in model]
 
     lasso = estimators["lasso"]
     alasso = estimators["alasso"]
@@ -501,21 +501,24 @@ def multi_omic_stabl_cv(
 
     before_averaging_dict = predictions_dict.copy() #**# Noush
     predictions_dict = {model: predictions_dict[model].median(axis=1) for model in predictions_dict.keys()}
+    new_pred_dict = {k: v for k, v in predictions_dict.items() if not v.isna().all()}
+    print("Non-NaN values for",len(new_pred_dict),"models")
 
-    for model, preds in predictions_dict.items():
+    for model, preds in new_pred_dict.items():
+        print("Model:",model,"Predictions:",preds,"Ground truth:",y)
         try:
             if pd.isna(y).any() or pd.isna(preds).any():
                 raise ValueError("Found NaNs in y or predictions")
 
             table_of_scores = compute_scores_table(
-                predictions_dict=predictions_dict,
+                predictions_dict=new_pred_dict,
                 y=y,
                 task_type=task_type,
                 selected_features_dict=formatted_features_dict
             )
 
-            p_values = compute_pvalues_table(
-                predictions_dict=predictions_dict,
+            p_values = compute_pvalues_table( #**# very weird behavior in vs-code.
+                predictions_dict=new_pred_dict,
                 y=y,
                 task_type=task_type,
                 selected_features_dict=formatted_features_dict
@@ -530,7 +533,7 @@ def multi_omic_stabl_cv(
                 p.to_csv(Path(p_values_path, f"{m}.csv"))
 
             save_plots(
-                predictions_dict=predictions_dict,
+                predictions_dict=new_pred_dict,
                 y=y,
                 task_type=task_type,
                 save_path=cv_res_path
